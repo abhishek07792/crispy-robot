@@ -1,0 +1,75 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: vapt_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: vapt_user
+      POSTGRES_PASSWORD: changeme
+      POSTGRES_DB: vapt_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vapt_user -d vapt_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: vapt_backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${BACKEND_PORT:-3001}:3001"
+    environment:
+      DATABASE_URL: postgresql://vapt_user:changeme@postgres:5432/vapt_db
+      JWT_SECRET: ${JWT_SECRET}
+      SESSION_SECRET: ${SESSION_SECRET}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      ANALYSIS_SERVICE_URL: http://analysis:5001
+      ANALYSIS_SERVICE_SECRET: ${ANALYSIS_SERVICE_SECRET}
+      SHODAN_API_KEY: ${SHODAN_API_KEY:-}
+      NVD_API_KEY: ${NVD_API_KEY:-}
+      DEMO_MODE: ${DEMO_MODE:-true}
+      NODE_ENV: ${NODE_ENV:-development}
+    env_file:
+      - .env
+
+  analysis:
+    build:
+      context: ./analysis
+      dockerfile: Dockerfile
+    container_name: vapt_analysis
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    environment:
+      ANALYSIS_SERVICE_SECRET: ${ANALYSIS_SERVICE_SECRET}
+      NVD_API_KEY: ${NVD_API_KEY:-}
+    env_file:
+      - .env
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: vapt_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "5173:80"
+    environment:
+      VITE_API_BASE_URL: http://localhost:${BACKEND_PORT:-3001}
+
+volumes:
+  postgres_data:

@@ -1,0 +1,54 @@
+# Environment variables — NEVER commit real secrets
+.env
+.env.local
+.env.production
+
+# Node
+node_modules/
+dist/
+build/
+.turbo/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+htmlcov/
+.coverage
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Docker volumes
+postgres_data/
+
+# Test artifacts
+coverage/
+.nyc_output/
+test-results/
+
+# Frontend build
+frontend/dist/
+frontend/.vite/
+
+# Backend
+backend/dist/
+
+# Reports/temp
+*.pdf
+tmp/
